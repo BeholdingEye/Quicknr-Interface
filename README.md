@@ -10,6 +10,7 @@ GPL licensed. The package includes fonts based on work by others, namely Iconic 
 Included widgets are:
 
 1. Arrow Anim:
+
   Animated arrow for pointing down, up, left or right. Usually down, on a landing page with a full-page hero image or carousel
 
 2. Font Resize
