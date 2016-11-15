@@ -1,7 +1,7 @@
 # Quicknr-Interface
 
 Javascript and CSS interface widgets for web pages and web apps
-=================
+-----------------
 
 A lighter alternative to Bootstrap, does not depend on jQuery
 
