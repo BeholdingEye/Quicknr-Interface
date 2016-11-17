@@ -59,4 +59,13 @@ Included widgets are:
 
   Clickable questions that reveal answers
 
-Enjoy!
+Change Log
+----------
+
+Version 1.1.0 - 17 November 2016
+
+  Carousel handling of fast user navigation improved and a new fading control added.
+
+Version 1.0.0 - 15 November 2016
+
+  Initial release.
