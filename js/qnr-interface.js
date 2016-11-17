@@ -1,6 +1,6 @@
 /* ==================================================================
  *
- *            QUICKNR INTERFACE 1.0.0
+ *            QUICKNR INTERFACE 1.1.0
  *
  *            Copyright 2016 Karl Dolenc, beholdingeye.com.
  *            All rights reserved.
@@ -167,7 +167,9 @@ var QNR_INTER = {};
      * "slideboth" - both the previous and next slides move out/in 
      *                  together, with no fading
      * 
-     * "slideover" - incoming slide moves over the previous, fading in 
+     * "slideover" - incoming slide moves over the previous, no fading
+     * 
+     * "slidefade" - incoming slide moves over the previous, fading in 
      *                  as it does so
      * 
      * Transition duration must be shorter than interval
@@ -193,10 +195,12 @@ var QNR_INTER = {};
      * is "on". This is useful if the slides are DIVs showing more than
      * images, with the user being able to interact with the content
      * 
-     * Slide fading is controlled with Javascript manipulation of 
-     * opacity and CSS transitions. Moving animation is by CSS with the 
-     * following classes used on the items:
+     * Slide fading is controlled with Javascript manipulation of CSS 
+     * animations, using the following classes on the items:
      * 
+     * "qnr-carousel-fadein"
+     * "qnr-carousel-slidefade-rtl"
+     * "qnr-carousel-slidefade-ltr"
      * "qnr-carousel-slidein-rtl"
      * "qnr-carousel-slidein-ltr"
      * "qnr-carousel-slideout-rtl"
@@ -696,7 +700,7 @@ var QNR_INTER = {};
         this.carouselStartInterval  = 4.0; // Seconds
         this.carouselInterval       = 3.0;
         this.transitionTime         = 1.0;
-        this.transitionMode         = "fade";
+        this.transitionMode         = "fade"; // Or "slideover", "slidefade", "slideboth"
         this.slideShowTime          = 0; // Milliseconds
         this.hardStop               = false; // Auto play stopped
         // Dataset preference, set it to "off" for hard stop on manual slide showing
@@ -730,50 +734,19 @@ var QNR_INTER = {};
             // Assign dataset ID
             this.carouselItemsL[i].dataset.qnrCarouselItemId = i;
         }
-        // Get user preferences on navigation elements, scroll offset and auto resuming
+        // Get user preferences on navigation elements, scroll offset, auto resuming, etc.
         if (this.object.dataset.qnrArrows) this.navArrows = this.object.dataset.qnrArrows;
         if (this.object.dataset.qnrStrip) this.navStrip = this.object.dataset.qnrStrip;
         if (this.object.dataset.qnrPreviews) this.navPreviews = this.object.dataset.qnrPreviews;
         if (this.object.dataset.qnrResumeAuto) this.resumeAuto = this.object.dataset.qnrResumeAuto;
         if (this.object.dataset.qnrScrollOffset) this.scrollOffset = parseInt(this.object.dataset.qnrScrollOffset);
-        // Set thumb preview property if preference "on" and device not mobile
-        if (!deviceIsMobile() && this.navPreviews == "on") {
-            this.thumbPreviews = true;
-        }
-        // Set Interval properties from data- attributes
-        if (this.object.dataset.qnrStartInterval) {
-            this.carouselStartInterval = parseFloat(this.object.dataset.qnrStartInterval);
-        }
-        if (this.object.dataset.qnrInterval) {
-            this.carouselInterval = parseFloat(this.object.dataset.qnrInterval);
-        }
-        // Set Transition mode property
-        if (this.object.dataset.qnrMode) {
-            this.transitionMode = this.object.dataset.qnrMode;
-        }
-        // Hide slides if Transition mode not "slideboth"
-        if (this.transitionMode != "slideboth") {
-            for (var i = 0; i < this.carouselItemsL.length; i++) {
-                this.carouselItemsL[i].style.opacity = 0;
-                this.carouselItemsL[i].style.visibility = "hidden";
-            }
-            
-        }
-        // Set Transition time property
+        if (this.object.dataset.qnrMode) this.transitionMode = this.object.dataset.qnrMode;
         if (this.object.dataset.qnrTransition) this.transitionTime = parseFloat(this.object.dataset.qnrTransition);
-        // Set animation duration if applicable
-        if (this.transitionMode != "fade" && this.transitionTime != 1.0) {
-            for (var i = 0; i < this.carouselItemsL.length; i++) {
-                if (this.carouselItemsL[i].style.animationDuration !== undefined) {
-                    this.carouselItemsL[i].style.animationDuration = this.transitionTime+"s";
-                }
-                else {
-                    this.carouselItemsL[i].style.webkitAnimationDuration = this.transitionTime+"s";
-                }
-            }
-        }
-        // Set Captions property
+        if (this.object.dataset.qnrStartInterval) this.carouselStartInterval = parseFloat(this.object.dataset.qnrStartInterval);
+        if (this.object.dataset.qnrInterval) this.carouselInterval = parseFloat(this.object.dataset.qnrInterval);
         if (this.object.dataset.qnrCaptions) this.captions = this.object.dataset.qnrCaptions;
+        // Set thumb preview property if preference "on" and device not mobile
+        if (!deviceIsMobile() && this.navPreviews == "on") this.thumbPreviews = true;
         // ----------------------- Create arrows
         if (this.navArrows == "on") {
             this.arrowLeft = document.createElement("span");
@@ -846,9 +819,7 @@ var QNR_INTER = {};
             }
         }
         
-        // ----------------------- Display first div
-        this.carouselItemsL[0].style.visibility = "visible";
-        this.carouselItemsL[0].style.opacity = 1;
+        // Set first div to top z-index
         this.carouselItemsL[0].style.zIndex = 2;
         if (this.captions == "on") this.captionDiv.innerHTML = this.captionItemsL[0];
         
@@ -893,36 +864,49 @@ var QNR_INTER = {};
         // newSlideIndex = index number of new component div
         // autoSliding = bool for auto sliding
         // slideDirection = "prev" or "next", affects direction of transition
-        // No action if interaction too quick for transitions, avoid blank screen
         var theDate = new Date();
-        if (theDate.getTime() - this.slideShowTime < this.transitionTime*1000) return;
+        // Transition time dependent on action time
+        var transitionT = this.transitionTime;
+        if (theDate.getTime() - this.slideShowTime < this.transitionTime*1000) {
+            transitionT = (theDate.getTime() - this.slideShowTime)/1000;
+        }
         clearTimeout(this.carouselTimer);
         this.carouselTimer = null;
         // Act only if not trying to show the shown div
         if (this.carouselItemsL[newSlideIndex].style.zIndex != 2) {
-            var slideTimer = null;
             // ----------------------- Toggle component div on display
             for (i = 0; i < this.carouselItemsL.length; i++) {
-                // The newSlideIndex div moved to 2 (top), opacity 1
-                // The div that was 2 (top) moved to 1 (bottom), opacity 1, then 0
-                // The bottom div on 1 moved down to 0, opacity 0
+                // Set animation duration
+                if (this.carouselItemsL[i].style.animationDuration !== undefined) {
+                    this.carouselItemsL[i].style.animationDuration = transitionT+"s";
+                }
+                else {
+                    this.carouselItemsL[i].style.webkitAnimationDuration = transitionT+"s";
+                }
+                // The newSlideIndex div moved to 2 (top)
+                // The div that was 2 (top) moved to 1 (bottom)
+                // The bottom div on 1 moved down to 0
                 if (i != newSlideIndex) {
                     if (this.carouselItemsL[i].style.zIndex != 2) {
                         // Not the previous top slide
                         this.carouselItemsL[i].style.zIndex = 0;
-                        this.carouselItemsL[i].style.transition = "";
-                        this.carouselItemsL[i].style.visibility = "hidden";
-                        this.carouselItemsL[i].style.opacity = 0;
+                        this.carouselItemsL[i].classList.remove("qnr-carousel-slidefade-rtl");
+                        this.carouselItemsL[i].classList.remove("qnr-carousel-slidefade-ltr");
                         this.carouselItemsL[i].classList.remove("qnr-carousel-slidein-rtl");
                         this.carouselItemsL[i].classList.remove("qnr-carousel-slidein-ltr");
                         this.carouselItemsL[i].classList.remove("qnr-carousel-slideout-rtl");
                         this.carouselItemsL[i].classList.remove("qnr-carousel-slideout-ltr");
+                        this.carouselItemsL[i].classList.remove("qnr-carousel-fadein");
                     }
                     else {
-                        // Former 2 (top), move to 1 (bottom), after transition turn off opacity
-                        // so it can later be turned on again
+                        // Former 2 (top), move to 1 (bottom)
                         this.carouselItemsL[i].style.zIndex = 1;
-                        if (this.transitionMode == "slideover" || this.transitionMode == "slideboth") {
+                        if (this.transitionMode == "fade") {
+                            this.carouselItemsL[i].classList.remove("qnr-carousel-fadein");
+                        }
+                        else {
+                            this.carouselItemsL[i].classList.remove("qnr-carousel-slidefade-rtl");
+                            this.carouselItemsL[i].classList.remove("qnr-carousel-slidefade-ltr");
                             this.carouselItemsL[i].classList.remove("qnr-carousel-slidein-rtl");
                             this.carouselItemsL[i].classList.remove("qnr-carousel-slidein-ltr");
                             if (this.transitionMode == "slideboth") {
@@ -934,33 +918,27 @@ var QNR_INTER = {};
                                 }
                             }
                         }
-                        var that = this;
-                        var iIndex = i;
-                        window.clearTimeout(slideTimer);
-                        // Only transition if user interaction not too fast
-                        //if (theDate.getTime() - this.slideShowTime > this.transitionTime*1000) {
-                            slideTimer = window.setTimeout(function(){
-                                that.carouselItemsL[iIndex].style.transition = "";
-                                that.carouselItemsL[iIndex].style.visibility = "hidden";
-                                that.carouselItemsL[iIndex].style.opacity = 0;
-                                if (that.transitionMode == "slideboth") {
-                                    that.carouselItemsL[iIndex].classList.remove("qnr-carousel-slideout-rtl");
-                                    that.carouselItemsL[iIndex].classList.remove("qnr-carousel-slideout-ltr");
-                                }
-                            },this.transitionTime*1000);
-                        //}
                     }
                 }
                 else { // New slide, move to 2 (top)
-                    this.carouselItemsL[i].style.transition = "";
-                    this.carouselItemsL[i].style.opacity = 1;
-                    this.carouselItemsL[i].style.visibility = "visible";
                     this.carouselItemsL[i].style.zIndex = 2;
-                    //if (theDate.getTime() - this.slideShowTime > this.transitionTime*1000) {
-                        if (this.transitionMode != "slideboth") { // Fade or slideover
-                            this.carouselItemsL[i].style.transition = "opacity "+this.transitionTime+"s";
+                    if (this.transitionMode == "fade") {
+                        this.carouselItemsL[i].classList.add("qnr-carousel-fadein");
+                    }
+                    else {
+                        if (this.transitionMode == "slidefade") {
+                            if (slideDirection == "prev") {
+                                this.carouselItemsL[i].classList.add("qnr-carousel-slidefade-ltr");
+                            }
+                            else {
+                                this.carouselItemsL[i].classList.add("qnr-carousel-slidefade-rtl");
+                            }
                         }
-                        if (this.transitionMode == "slideover" || this.transitionMode == "slideboth") {
+                        else {
+                            if (this.transitionMode == "slideboth") {
+                                this.carouselItemsL[i].classList.remove("qnr-carousel-slideout-rtl");
+                                this.carouselItemsL[i].classList.remove("qnr-carousel-slideout-ltr");
+                            }
                             if (slideDirection == "prev") {
                                 this.carouselItemsL[i].classList.add("qnr-carousel-slidein-ltr");
                             }
@@ -968,7 +946,7 @@ var QNR_INTER = {};
                                 this.carouselItemsL[i].classList.add("qnr-carousel-slidein-rtl");
                             }
                         }
-                    //}
+                    }
                 }
             }
             
