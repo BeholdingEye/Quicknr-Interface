@@ -59,8 +59,14 @@ Included widgets are:
 
   Clickable questions that reveal answers
 
+In addition, since version 1.2.0, a separate widget, hierarchical menu, has been added. The menu is separately deployable because most websites will not require it. The "js/qnr-hmenu.js" and "css/qnr-hmenu.css" can be linked to in the HTML file just like the "js/qnr-interface.js" and "css/qnr-interface.css" files. The menu widget likewise depends on the font used by the package. Some utility code from the interface files is duplicated in the hmenu files, so that they can work independently (but can also be used togther). The hierarchical menu is presently not compatible with the collapsing navbar widget in the interface package.
+
 Change Log
 ----------
+
+Version 1.2.0 - 21 November 2016
+
+  Hierarchical menu widget added as a separately useable part of the package.
 
 Version 1.1.0 - 17 November 2016
 
