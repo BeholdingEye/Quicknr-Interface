@@ -1,0 +1,115 @@
+/*
+  QNR Interface Hierarchical Menu Stylesheet
+*/
+
+@font-face {
+    font-family: "Quicknr";
+    src: url("../font/quicknr-interface.woff") format("woff");
+}
+
+body {
+    display: block;
+    position: relative;
+/*
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+*/
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial,sans-serif;
+    font-size: 16px;
+    text-align: center;
+    overflow: auto;
+    background-color: white;
+}
+
+
+/* HIERARCHICAL MENU
+ * ----------------------------------------------------- */
+
+.qnr-hmenu ul {     /* All ULs in widget, main and sub */
+/*
+    display: block;
+*/
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    width: 12em;
+    text-align: left;
+    list-style-type: none;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+.qnr-hmenu:hover {
+    cursor: pointer;
+}
+
+.qnr-hmenu li {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0.5em;
+    color: #555;
+    border: dotted thin #EEE;
+    box-shadow: 1px 1px 3px rgba(1,1,1,0.5);
+    box-sizing: border-box;
+    background-color: white;
+}
+.qnr-hmenu li:hover {
+    cursor: pointer;
+    color: black;
+    background-color: #EEE;
+}
+
+/* Main menu, hidden to begin with */
+ul.qnr-hmenu-menu {
+    display: block;
+    top: 100%;      /* Containing widget object must be positioned */
+}
+
+/* Submenu */
+ul.qnr-hmenu-submenu {
+    display: block;
+    left: 11.6em;
+    -o-transform: translateY(-2em);
+    -ms-transform: translateY(-2em);
+    -moz-transform: translateY(-2em);
+    -webkit-transform: translateY(-2em);
+    transform: translateY(-2em);
+}
+ul.qnr-hmenu-submenu-left {
+    left: auto;
+    right: 11.6em;
+}
+ul.qnr-hmenu-submenu-up {
+    bottom: 0;
+    -o-transform: none;
+    -ms-transform: none;
+    -moz-transform: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+/* Submenu holder */
+li.qnr-hmenu-subholder::before {
+    content: "D";   /* Triangle right */
+    display: block;
+    position: absolute;
+    right: 0.1em;
+    font-family: Quicknr;
+    font-weight: normal;
+    font-style: normal;
+    color: silver;
+    margin: 0;
+    padding: 0;
+    speak: none;
+}
+li.qnr-hmenu-subholder:hover {
+    color: black;
+}
+
