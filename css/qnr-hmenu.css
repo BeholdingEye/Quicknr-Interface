@@ -1,5 +1,5 @@
 /*
-  QNR Interface Hierarchical Menu Stylesheet
+  QNR Hierarchical Menu Stylesheet
 */
 
 @font-face {
@@ -32,15 +32,14 @@ body {
  * ----------------------------------------------------- */
 
 .qnr-hmenu ul {     /* All ULs in widget, main and sub */
-/*
-    display: block;
-*/
+    display: none;  /* Hidden to prevent flashes on load */
     position: absolute;
     margin: 0;
     padding: 0;
     width: 12em;
     text-align: left;
     list-style-type: none;
+    box-shadow: 1px 1px 3px rgba(1,1,1,0.5);
     box-sizing: border-box;
     z-index: 1000;
 }
@@ -55,12 +54,11 @@ body {
     margin: 0;
     padding: 0.5em;
     color: #555;
-    border: dotted thin #EEE;
-    box-shadow: 1px 1px 3px rgba(1,1,1,0.5);
+    border: solid thin #EEE;
     box-sizing: border-box;
     background-color: white;
 }
-.qnr-hmenu li:hover {
+.qnr-hmenu li:not([class~="qnr-hmenu-idle"]):hover {
     cursor: pointer;
     color: black;
     background-color: #EEE;
@@ -68,31 +66,23 @@ body {
 
 /* Main menu, hidden to begin with */
 ul.qnr-hmenu-menu {
-    display: block;
+    display: none;
     top: 100%;      /* Containing widget object must be positioned */
 }
 
 /* Submenu */
 ul.qnr-hmenu-submenu {
-    display: block;
+    display: none;
+    top: -2em;
     left: 11.6em;
-    -o-transform: translateY(-2em);
-    -ms-transform: translateY(-2em);
-    -moz-transform: translateY(-2em);
-    -webkit-transform: translateY(-2em);
-    transform: translateY(-2em);
 }
 ul.qnr-hmenu-submenu-left {
     left: auto;
     right: 11.6em;
 }
 ul.qnr-hmenu-submenu-up {
+    top: auto;
     bottom: 0;
-    -o-transform: none;
-    -ms-transform: none;
-    -moz-transform: none;
-    -webkit-transform: none;
-    transform: none;
 }
 
 /* Submenu holder */
@@ -111,5 +101,9 @@ li.qnr-hmenu-subholder::before {
 }
 li.qnr-hmenu-subholder:hover {
     color: black;
+}
+
+/* Override for appearance of widget while menu is displayed */
+.qnr-hmenu-hover {
 }
 
