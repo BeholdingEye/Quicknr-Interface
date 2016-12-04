@@ -1,6 +1,6 @@
 /* ==================================================================
  *
- *            QUICKNR INTERFACE 1.1.0
+ *            QUICKNR INTERFACE 1.3.0
  *
  *            Copyright 2016 Karl Dolenc, beholdingeye.com.
  *            All rights reserved.
@@ -143,13 +143,22 @@ var QNR_INTER = {};
      * the control strip will on hover display small animated previews 
      * and have an additional class of "qnr-carousel-thumb-preview"
      * 
+     * Selector circles can be set to display slide numbers. For styling
+     * override these CSS declarations, where active is the shown slide:
+     * 
+     * "qnr-carousel-thumb-inactive"
+     * "qnr-carousel-thumb-active"
+     * "qnr-carousel-thumb-number-inactive"
+     * "qnr-carousel-thumb-number-active"
+     * 
      * The navigation components - arrows, control strip and thumb 
-     * previews - can be set to "on" or "off" with these attributes (all
-     * "on" by default):
+     * previews and numbers - can be set to "on" or "off" with these 
+     * attributes (all "on" by default, except numbers):
      * 
      * "data-qnr-arrows"
      * "data-qnr-strip"
      * "data-qnr-previews"
+     * "data-qnr-thumb-numbers"
      * 
      * The time it takes between loading of the page and the start of 
      * play can be set with the "data-qnr-start-interval" 
@@ -691,10 +700,10 @@ var QNR_INTER = {};
         this.arrowLeft              = null;
         this.arrowRight             = null;
         this.arrowType              = "regular";
-        this.thumbBorderColor       = "#CCC";
-        this.thumbBorderColorActive = "#DDD";
-        this.thumbBGColor           = "transparent";
-        this.thumbBGColorActive     = "#EEE";
+        //this.thumbBorderColor       = "#CCC";
+        //this.thumbBorderColorActive = "#DDD";
+        //this.thumbBGColor           = "transparent";
+        //this.thumbBGColorActive     = "#EEE";
         this.thumbPreviews          = false; // Relevant if IMG items
         this.carouselTimer          = null;
         this.carouselStartInterval  = 4.0; // Seconds
@@ -707,6 +716,8 @@ var QNR_INTER = {};
         this.resumeAuto             = "on";
         // Offset for pausing on scroll, set to negative with dataset attribute for fixed navbar
         this.scrollOffset           = 0;
+        // Preference for setting slide numbers in thumb circles
+        this.thumbNumbers           = "off";
     }
     CarouselObject.prototype.initialize = function() {
         if (!this.object.hasChildNodes() || this.object.children.length < 2) {
@@ -745,6 +756,7 @@ var QNR_INTER = {};
         if (this.object.dataset.qnrStartInterval) this.carouselStartInterval = parseFloat(this.object.dataset.qnrStartInterval);
         if (this.object.dataset.qnrInterval) this.carouselInterval = parseFloat(this.object.dataset.qnrInterval);
         if (this.object.dataset.qnrCaptions) this.captions = this.object.dataset.qnrCaptions;
+        if (this.object.dataset.qnrThumbNumbers) this.thumbNumbers = this.object.dataset.qnrThumbNumbers;
         // Set thumb preview property if preference "on" and device not mobile
         if (!deviceIsMobile() && this.navPreviews == "on") this.thumbPreviews = true;
         // ----------------------- Create arrows
@@ -783,22 +795,26 @@ var QNR_INTER = {};
             var cStripDiv = document.createElement("div");
             cStripDiv.className = "qnr-carousel-controlstrip";
             var cStrip = "";
+            var slideNum = "";
             // SPANs for all the img thumbs or just circles
             for (i = 0; i < this.carouselItemsL.length; i++) {
+                if (this.thumbNumbers == "on") slideNum = "" + (i+1);
                 if (this.thumbPreviews) {
                     cStrip += '<span onmouseout="this.style.backgroundImage=null;" onmouseover="this.style.backgroundImage=\'url('+
-                            this.itemUrlsL[i]+')\';" class="qnr-carousel-thumb qnr-carousel-thumb-preview" data-qnr-carousel-thumb-id="'+i+'"></span>';
+                            this.itemUrlsL[i]+')\';" class="qnr-carousel-thumb qnr-carousel-thumb-preview" data-qnr-carousel-thumb-id="'+i+'">'+slideNum+'</span>';
                 }
                 else {
-                    cStrip += '<span class="qnr-carousel-thumb" data-qnr-carousel-thumb-id="'+i+'"></span>';
+                    cStrip += '<span class="qnr-carousel-thumb" data-qnr-carousel-thumb-id="'+i+'">'+slideNum+'</span>';
                 }
             }
             cStripDiv.innerHTML = cStrip;
             // Place control strip in carousel
             this.object.appendChild(cStripDiv);
-            // Add click event handlers to thumbs
+            // Add inactive class and click event handlers to thumbs
             var thumbs = classObjs("qnr-carousel-thumb", this.object);
             for (var i = 0; i < thumbs.length; i++) {
+                if (this.thumbNumbers == "on") thumbs[i].classList.add("qnr-carousel-thumb-number-inactive");
+                else thumbs[i].classList.add("qnr-carousel-thumb-inactive");
                 that = this;
                 thumbs[i].addEventListener("click",function(event){
                     that.showSlide(parseInt(event.target.dataset.qnrCarouselThumbId),false,
@@ -823,10 +839,18 @@ var QNR_INTER = {};
         this.carouselItemsL[0].style.zIndex = 2;
         if (this.captions == "on") this.captionDiv.innerHTML = this.captionItemsL[0];
         
-        // Set border/bg color of first thumb to active
+        // Set border/bg color of first thumb to active, the rest remains inactive
         if (this.navStrip == "on") {
-            objTag("span", cStripDiv).style.borderColor = this.thumbBorderColorActive;
-            objTag("span", cStripDiv).style.backgroundColor = this.thumbBGColorActive;
+            if (this.thumbNumbers == "on") {
+                objTag("span", cStripDiv).classList.remove("qnr-carousel-thumb-number-inactive");
+                objTag("span", cStripDiv).classList.add("qnr-carousel-thumb-number-active");
+            }
+            else {
+                objTag("span", cStripDiv).classList.remove("qnr-carousel-thumb-inactive");
+                objTag("span", cStripDiv).classList.add("qnr-carousel-thumb-active");
+            }
+            //objTag("span", cStripDiv).style.borderColor = this.thumbBorderColorActive;
+            //objTag("span", cStripDiv).style.backgroundColor = this.thumbBGColorActive;
         }
         
         this.startCarouselTimer();
@@ -955,12 +979,28 @@ var QNR_INTER = {};
                 var stripThumbs = classObjs("qnr-carousel-thumb", this.object);
                 for (i = 0; i < stripThumbs.length; i++) {
                     if (i != newSlideIndex) {
-                        stripThumbs[i].style.borderColor = this.thumbBorderColor;
-                        stripThumbs[i].style.backgroundColor = this.thumbBGColor;
+                        if (this.thumbNumbers == "on") {
+                            stripThumbs[i].classList.remove("qnr-carousel-thumb-number-active");
+                            stripThumbs[i].classList.add("qnr-carousel-thumb-number-inactive");
+                        }
+                        else {
+                            stripThumbs[i].classList.remove("qnr-carousel-thumb-active");
+                            stripThumbs[i].classList.add("qnr-carousel-thumb-inactive");
+                        }
+                        //stripThumbs[i].style.borderColor = this.thumbBorderColor;
+                        //stripThumbs[i].style.backgroundColor = this.thumbBGColor;
                     }
                     else { // Thumb of slide being shown
-                        stripThumbs[i].style.borderColor = this.thumbBorderColorActive;
-                        stripThumbs[i].style.backgroundColor = this.thumbBGColorActive;
+                        if (this.thumbNumbers == "on") {
+                            stripThumbs[i].classList.remove("qnr-carousel-thumb-number-inactive");
+                            stripThumbs[i].classList.add("qnr-carousel-thumb-number-active");
+                        }
+                        else {
+                            stripThumbs[i].classList.remove("qnr-carousel-thumb-inactive");
+                            stripThumbs[i].classList.add("qnr-carousel-thumb-active");
+                        }
+                        //stripThumbs[i].style.borderColor = this.thumbBorderColorActive;
+                        //stripThumbs[i].style.backgroundColor = this.thumbBGColorActive;
                     }
                 }
             }
@@ -1878,137 +1918,6 @@ var QNR_INTER = {};
     },false);
     
 
-    // ===================== UTILITY FUNCTIONS =====================
-
-    // ----------------------- Mobile device detector
-
-    function deviceIsMobile() {
-        var isMobile = /iPhone|iPad|iPod|Android|Blackberry|Nokia|Opera mini|Windows mobile|Windows phone|iemobile/i.test(navigator.userAgent);
-        return isMobile;
-    }
-
-
-    // ----------------------- File & Dir Path Getters
-
-    function getHrefDirPath() {
-        return window.location.href.substr(0,window.location.href.lastIndexOf("/"));
-    }
-
-    function getHrefDirName() {
-        var wDirPath = getHrefDirPath();
-        return wDirPath.substr(wDirPath.lastIndexOf("/")+1);
-    }
-
-    function getHrefFileName() {
-        // Assumes no query or id
-        var fn =  window.location.href.split("/").pop();
-        if (!fn) fn = "index.html"; // Avoid empty name
-        return fn;
-    }
-
-    // ----------------------- Percentage function
-
-    function rangeToPercent(number, min, max) {
-        return ((number - min) / (max - min)) * 100;
-    }
-
-    // ----------------------- Position functions
-
-    // Returns Y position of element, with given offset
-    function getYPos(elem, offsetPos) {
-        if (!offsetPos) offsetPos = 0;
-        var oPos = offsetPos;
-        if (elem.offsetParent) {
-            do {
-                oPos += elem.offsetTop;
-            } while (elem = elem.offsetParent);
-        }
-        return oPos;
-    }
-
-    // Returns X position of element, with given offset
-    function getXPos(elem, offsetPos) {
-        oPos = offsetPos;
-        if (elem.offsetParent) {
-            do {
-                oPos += elem.offsetLeft;
-            } while (elem = elem.offsetParent);
-        }
-        return oPos;
-    }
-
-    // ----------------------- Image preloader
-
-    function loadImagesIntoMemory(imgList) {
-        for (var i = 0; i < imgList.length; i++) {
-            var img = new Image();
-            img.src = imgList[i];
-        }
-    }
-
-    // ----------------------- Other functions
-
-    function async(fn, args) {
-        // Execute the passed function asynchronously
-        setTimeout(function() {fn(args);}, 0);
-    }
-
-    function print(args) {
-        console.log(args);
-    }
-
-    // ----------------------- Convenience object-getting functions
-
-    function objHtml() {
-        return document.documentElement;
-    }
-
-    function objClass(name, parent) {
-        if (!parent) {
-            return document.getElementsByClassName(name)[0];
-        }
-        else {
-            return parent.getElementsByClassName(name)[0];
-        }
-    }
-
-    function classObjs(name, parent) {
-        if (!parent) {
-            return document.getElementsByClassName(name);
-        }
-        else {
-            return parent.getElementsByClassName(name);
-        }
-    }
-
-    function objID(id, parent) {
-        if (!parent) {
-            return document.getElementById(id);
-        }
-        else {
-            return parent.getElementById(id);
-        }
-        
-    }
-
-    function objTag(tag, parent) {
-        if (!parent) {
-            return document.getElementsByTagName(tag)[0];
-        }
-        else {
-            return parent.getElementsByTagName(tag)[0];
-        }
-    }
-
-    function tagObjs(tag, parent) {
-        if (!parent) {
-            return document.getElementsByTagName(tag);
-        }
-        else {
-            return parent.getElementsByTagName(tag);
-        }
-    }
-    
     // ----------------------- Widget JS object getters
 
     function sliderID(id) {
@@ -2020,3 +1929,147 @@ var QNR_INTER = {};
     }
 
 })() // End of Quicknr Interface
+
+
+/* ===================== UTILITY FUNCTIONS ===========================
+ * 
+ * Moved out of the self-executing function above to the global name-
+ * space, available to scripts further up the chain
+ * 
+ * ===================================================================*/
+
+// ----------------------- Mobile device & Chrome detectors
+
+function deviceIsMobile() {
+    var isMobile = /iPhone|iPad|iPod|Android|Blackberry|Nokia|Opera mini|Windows mobile|Windows phone|iemobile/i.test(navigator.userAgent);
+    return isMobile;
+}
+
+function browserIsChrome() {
+    return /Chrome/i.test(navigator.userAgent);
+}
+
+// ----------------------- File & Dir Path Getters
+
+function getHrefDirPath() {
+    return window.location.href.substr(0,window.location.href.lastIndexOf("/"));
+}
+
+function getHrefDirName() {
+    var wDirPath = getHrefDirPath();
+    return wDirPath.substr(wDirPath.lastIndexOf("/")+1);
+}
+
+function getHrefFileName() {
+    var fn =  window.location.href.split("/").pop();
+    if (!fn) fn = "index.html"; // Avoid empty name
+    else {
+        fn = fn.split("#")[0];
+        fn = fn.split("?")[0];
+    }
+    return fn;
+}
+
+// ----------------------- Percentage function
+
+function rangeToPercent(number, min, max) {
+    return ((number - min) / (max - min)) * 100;
+}
+
+// ----------------------- Position functions
+
+// Returns Y position of element, with given offset
+function getYPos(elem, offsetPos) {
+    if (!offsetPos) offsetPos = 0;
+    var oPos = offsetPos;
+    if (elem.offsetParent) {
+        do {
+            oPos += elem.offsetTop;
+        } while (elem = elem.offsetParent);
+    }
+    return oPos;
+}
+
+// Returns X position of element, with given offset
+function getXPos(elem, offsetPos) {
+    oPos = offsetPos;
+    if (elem.offsetParent) {
+        do {
+            oPos += elem.offsetLeft;
+        } while (elem = elem.offsetParent);
+    }
+    return oPos;
+}
+
+// ----------------------- Image preloader
+
+function loadImagesIntoMemory(imgList) {
+    for (var i = 0; i < imgList.length; i++) {
+        var img = new Image();
+        img.src = imgList[i];
+    }
+}
+
+// ----------------------- Other functions
+
+function async(fn, args) {
+    // Execute the passed function asynchronously
+    setTimeout(function() {fn(args);}, 0);
+}
+
+function print(args) {
+    console.log(args);
+}
+
+// ----------------------- Convenience object-getting functions
+
+function objHtml() {
+    return document.documentElement;
+}
+
+function objClass(name, parent) {
+    if (!parent) {
+        return document.getElementsByClassName(name)[0];
+    }
+    else {
+        return parent.getElementsByClassName(name)[0];
+    }
+}
+
+function classObjs(name, parent) {
+    if (!parent) {
+        return document.getElementsByClassName(name);
+    }
+    else {
+        return parent.getElementsByClassName(name);
+    }
+}
+
+function objID(id, parent) {
+    if (!parent) {
+        return document.getElementById(id);
+    }
+    else {
+        return parent.getElementById(id);
+    }
+    
+}
+
+function objTag(tag, parent) {
+    if (!parent) {
+        return document.getElementsByTagName(tag)[0];
+    }
+    else {
+        return parent.getElementsByTagName(tag)[0];
+    }
+}
+
+function tagObjs(tag, parent) {
+    if (!parent) {
+        return document.getElementsByTagName(tag);
+    }
+    else {
+        return parent.getElementsByTagName(tag);
+    }
+}
+    
