@@ -69,7 +69,7 @@ Version 1.3.0 - 4 December 2016
   * Library functions moved into global namespace in qnr-interface.js
   * Carousel thumbs (selector circles) may now be set to be slide numbers
   * Styling of the thumbs is now by CSS, not Javascript
-  * Glyphs for Skype and a phone from the Quicknr interface font have been added to the CSS stylesheet
+  * Glyphs for Skype and a phone have been added to the fonts and listed in CSS
 
   * Hierarchical menu widget improved:
    * Submenus may now be aligned to the top of their parent submenus
