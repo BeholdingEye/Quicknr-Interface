@@ -425,7 +425,11 @@ span.qnr-carousel-thumb {
     padding: 2px;
     width: 6px;
     height: 6px;
-    vertical-align: middle;
+    font-size: 1.5em;
+    font-weight: bold;
+    line-height: 1em;
+    vertical-align: top;
+    color: white;
     border: solid 3px silver;
     background-color: transparent;
     background-size: cover;
@@ -436,11 +440,30 @@ span.qnr-carousel-thumb {
     overflow: hidden;
     cursor: pointer;
 }
-span.qnr-carousel-thumb:hover {
+span.qnr-carousel-thumb-inactive {
+    border-color: #CCC;
     background-color: transparent;
 }
+span.qnr-carousel-thumb-active {
+    border-color: #DDD;
+    background-color: #EEE;
+}
+span.qnr-carousel-thumb-number-inactive {
+    border-color: black;
+    background-color: black;
+}
+span.qnr-carousel-thumb-number-active {
+    border-color: orange;
+    background-color: orange;
+}
+span.qnr-carousel-thumb:hover {
+/*
+    border-color: #DDD;
+    background-color: transparent;
+*/
+}
 
-/* Preview thumbs for IMG items */
+/* Preview thumbs */
 span.qnr-carousel-thumb-preview:hover {
     width: 54px;
     height: 54px;
@@ -1302,6 +1325,7 @@ div.qnr-accordion div {
 .qnr-glyph-arrowthin-up::before         {content: "\00c1";}
 .qnr-glyph-arrowthin-left::before       {content: "\00c2";}
 .qnr-glyph-arrowthin-right::before      {content: "\00c3";}
+.qnr-glyph-phone::before                {content: "\00c5";}
 .qnr-glyph-waterdrop::before            {content: "\0166";}
 .qnr-glyph-lightning::before            {content: "\0168";}
 .qnr-glyph-connections::before          {content: "\0169";}
@@ -1374,6 +1398,7 @@ div.qnr-accordion div {
 .qnr-glyph-instagram::before            {content: "i";}
 .qnr-glyph-linkedin::before             {content: "l";}
 .qnr-glyph-pinterest::before            {content: "p";}
+.qnr-glyph-skype::before                {content: "s";}
 .qnr-glyph-twitter::before              {content: "t";}
 .qnr-glyph-youtube::before              {content: "y";}
 
