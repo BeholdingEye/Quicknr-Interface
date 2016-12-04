@@ -70,8 +70,11 @@ Version 1.3.0 - 4 December 2016
 
   Hierarchical menu widget improved:
     * Submenus may now be aligned to the top of their parent submenus
+    
     * Quick stray mouse movements are now tolerated with a delay before closing of menus
+    
     * "Idle" menu items (titles and spacers) are now supported
+    
     * qnr-hmenu.js now depends on global functions in qnr-interface.js
 
 Version 1.2.0 - 21 November 2016
