@@ -1,6 +1,6 @@
 /* ==================================================================
  *
- *            QUICKNR HIERARCHICAL MENU 1.0.0
+ *            QUICKNR HIERARCHICAL MENU 1.1.0
  *
  *            Copyright 2016 Karl Dolenc, beholdingeye.com.
  *            All rights reserved.
@@ -83,8 +83,19 @@ var QNR_HMENU = {};
      * 
      * Menus can be set to open and close on mouse hover with the 
      * "data-qnr-hover" attribute set to "yes", the default, or "no" for
-     * clicking support only. If just one widget is set to "no", all 
-     * will be hidden on mouse leaving them
+     * clicking support only
+     * 
+     * LI items that should not be active but act as spacers or section
+     * titles should be assigned the class of "qnr-hmenu-idle", perhaps
+     * overriden
+     * 
+     * By default, submenus are positioned by CSS. To align them to top
+     * edges of their parent menus, set a "data-qnr-hmenu-align" 
+     * attribute on the widget to "yes"
+     * 
+     * While menus are open, the code assigns the "qnr-hmenu-hover" 
+     * class to the widget object. This helps to time the appearance of
+     * the widget in sync with the menus
      * 
      * -------------------------------------------------------------- */ 
 
@@ -93,7 +104,6 @@ var QNR_HMENU = {};
     // ----------------------- Create a list of widgets
     QNR_HMENU.hmenusL = null; // List of hierarchical menu elements in doc
     QNR_HMENU.hmenuObjectsL = []; // List of JS hierarchical menu objects
-    
     
     // ----------------------- HIERARCHICAL MENU
     
@@ -105,17 +115,20 @@ var QNR_HMENU = {};
         this.submenus = [];
         this.parents = []; // Containers of submenus
         this.hoverOpen = "yes"; // Open on hover or only on click
+        this.changeTime = 0; // Used for mouse event delays
+        this.alignSubmenus = "no"; // Option to align submenus to parent top
     }
     HmenuObject.prototype.initialize = function() {
         // Set preferences from dataset attributes
         if (this.object.dataset.qnrHmenuDirectionX) this.directionX = this.object.dataset.qnrHmenuDirectionX;
         if (this.object.dataset.qnrHmenuDirectionY) this.directionY = this.object.dataset.qnrHmenuDirectionY;
         if (this.object.dataset.qnrHmenuHover) this.hoverOpen = this.object.dataset.qnrHmenuHover;
+        if (this.object.dataset.qnrHmenuAlign) this.alignSubmenus = this.object.dataset.qnrHmenuAlign;
         // Hide the main UL
         this.menu = objTag("ul", this.object);
         this.menu.classList.add("qnr-hmenu-menu");
-        var menuHeight = this.menu.offsetHeight; // Must be here, before hiding by CSS rule
-        this.menu.style.display = "none";
+        var menuHeight = this.menu.offsetHeight; // Must be here, before hiding (??:)
+        this.menu.style.display = "none"; // Redundant now, it is "none" in CSS (TODO refactor with visibility)
         // Consider only vertical direction for main menu
         if (this.directionY == "up") {
             // Set bottom of menu to top of widget object
@@ -137,10 +150,10 @@ var QNR_HMENU = {};
         // Set onclick handler on the widget object to display the menu
         var this1 = this;
         this.object.addEventListener("click", function(event) {
-            //print("========= MAIN : "+event.target.tagName);
             this1.hideMenus();
             this1.menu.style.display = "block";
-            event.stopPropagation();
+            this1.object.classList.add("qnr-hmenu-hover");
+            //event.stopPropagation();
         }, false);
         // Set onmouseover handler
         if (this.hoverOpen == "yes") {
@@ -149,6 +162,7 @@ var QNR_HMENU = {};
                 if (event.target == this1.object) {
                     this1.hideMenus();
                     this1.menu.style.display = "block";
+                    this1.object.classList.add("qnr-hmenu-hover");
                     event.stopPropagation();
                 }
             }, true);
@@ -162,12 +176,13 @@ var QNR_HMENU = {};
             if (liItemsL[i].classList.contains("qnr-hmenu-subholder")) { // Submenu holder
                 // Onclick
                 liItemsL[i].addEventListener("click", function(event) {
-                    // Hide any other shown submenus, not in path of target
-                    this1.hideSubmenus(event, "others");
                     // Prevent child LI objects in further submenus bubbling up to here and failing
                     if (event.target.dataset.qnrSubmenuParentId) {
-                        //print("================ SUB : "+event.target.tagName);
-                        this1.submenus[parseInt(event.target.dataset.qnrSubmenuParentId)].style.display = "block";
+                        // Hide any other shown submenus, not in path of target (must be here, not above test)
+                        this1.hideSubmenus(event, "others");
+                        var sMenu = this1.submenus[parseInt(event.target.dataset.qnrSubmenuParentId)];
+                        sMenu.style.display = "block";
+                        if (this1.alignSubmenus == "yes") this1.alignSubmenuToParent(sMenu);
                         event.stopPropagation();
                     }
                 }, true); // Registered for the capturing phase, not bubbling up to ancestors
@@ -175,33 +190,30 @@ var QNR_HMENU = {};
                 if (this.hoverOpen == "yes") {
                     //this1 = this;
                     liItemsL[i].addEventListener("mouseover", function(event) {
-                        // Hide any other shown submenus, not in path of target
-                        this1.hideSubmenus(event, "others");
                         // Prevent child LI objects in further submenus bubbling up to here and failing
                         if (event.target.dataset.qnrSubmenuParentId) {
-                            //print("================ SUB : "+event.target.tagName);
-                            this1.submenus[parseInt(event.target.dataset.qnrSubmenuParentId)].style.display = "block";
+                            // Hide any other shown submenus, not in path of target
+                            this1.hideSubmenus(event, "others");
+                            var sMenu = this1.submenus[parseInt(event.target.dataset.qnrSubmenuParentId)];
+                            sMenu.style.display = "block";
+                            if (this1.alignSubmenus == "yes") this1.alignSubmenuToParent(sMenu);
                             event.stopPropagation();
                         }
                     }, true);
                 }
             }
-            else { // Not a submenu holder
+            else { // Not a submenu holder (mouseover handled at window level)
                 liItemsL[i].addEventListener("click", function(event) {
                     // Hide any submenus
                     this1.hideSubmenus(event, "all");
                     this1.hideMenus();
                     event.stopPropagation();
                 }, true);
-                if (this.hoverOpen == "yes") {
-                    liItemsL[i].addEventListener("mouseover", function(event) {
-                        // Hide any other shown submenus, not in path of target
-                        this1.hideSubmenus(event, "others");
-                        event.stopPropagation();
-                    }, true);
-                }
             }
         }
+    }
+    HmenuObject.prototype.alignSubmenuToParent = function(sMenu) {
+        sMenu.style.top = "-" + sMenu.parentNode.offsetTop + "px";
     }
     HmenuObject.prototype.hideMenus = function() {
         // Hide any hmenus that are open
@@ -215,12 +227,12 @@ var QNR_HMENU = {};
                     }
                 }
                 QNR_HMENU.hmenuObjectsL[i].menu.style.display = "none";
+                QNR_HMENU.hmenuObjectsL[i].object.classList.remove("qnr-hmenu-hover");
             }
         }
     }
     HmenuObject.prototype.hideSubmenus = function(event, allOrOthers) {
         // Hide submenus of this hmenu that are open, all or others
-        // Called from onclick handler on submenu LI parents
         if (allOrOthers != "all") {
             // Make a list of all submenu objects in target path
             var targetPathObjectsL = [];
@@ -291,6 +303,7 @@ var QNR_HMENU = {};
         if (QNR_HMENU.hmenuObjectsL) {
             var etp = event.target.parentNode;
             // If for some reason we reach beyond <HTML>, it will be undefined
+            // <A> tags in <LI>s taken care of in LI handler
             if ((event.target.tagName === undefined || etp.tagName === undefined) 
                                                     || (!event.target.classList.contains("qnr-hmenu") 
                                                     && !etp.classList.contains("qnr-hmenu-menu") 
@@ -298,6 +311,7 @@ var QNR_HMENU = {};
                 for (var i = 0; i < QNR_HMENU.hmenuObjectsL.length; i++) {
                     if (window.getComputedStyle(QNR_HMENU.hmenuObjectsL[i].menu, "").display != "none") {
                         QNR_HMENU.hmenuObjectsL[i].menu.style.display = "none";
+                        QNR_HMENU.hmenuObjectsL[i].object.classList.remove("qnr-hmenu-hover");
                         // Submenus of this menu
                         if (QNR_HMENU.hmenuObjectsL[i].submenus) {
                             var subms = QNR_HMENU.hmenuObjectsL[i].submenus;
@@ -314,18 +328,66 @@ var QNR_HMENU = {};
     }, false);
     
     
-    // ----------------------- ONMOUSEOVER
+    // ----------------------- ONMOUSEOUT
     
-    window.addEventListener("mouseover", function(event){
-        // Hide hmenus if mouse not over any - after a delay
+    window.addEventListener("mouseout", function(event){
+        // Close any open menus and submenus, if mouse not over menu or submenu
         if (QNR_HMENU.hmenuObjectsL) {
-            var etp = event.target.parentNode;
-            // If for some reason we reach beyond <HTML>, it will be undefined
-            if ((event.target.tagName === undefined || etp.tagName === undefined) 
-                                                    || (!event.target.classList.contains("qnr-hmenu") 
-                                                    && !etp.classList.contains("qnr-hmenu-menu") 
-                                                    && !etp.classList.contains("qnr-hmenu-submenu"))) {
-                QNR_HMENU.hmenuObjectsL[0].hideMenus();
+            var et = event.target;
+            var etp = et.parentNode;
+            // Test for mouseout from a (sub)menu item (taking care of <A> tags in <Li>s)
+            if (etp !== undefined && etp.className !== undefined 
+                    && (et.classList.contains("qnr-hmenu") 
+                    || etp.classList.contains("qnr-hmenu-menu")
+                    || etp.parentNode.classList.contains("qnr-hmenu-menu")
+                    || etp.classList.contains("qnr-hmenu-subholder")
+                    || etp.classList.contains("qnr-hmenu-submenu")
+                    || etp.parentNode.classList.contains("qnr-hmenu-submenu"))) {
+                if (et.classList !== undefined && et.classList.contains("qnr-hmenu")) etp = et;
+                else {
+                    while (1) { // Get hmenu widget object
+                        etp = etp.parentNode;
+                        if (etp.className === undefined) return;
+                        else if (etp.classList.contains("qnr-hmenu")) break;
+                    }
+                }
+                var tObj = QNR_HMENU.hmenuObjectsL[etp.dataset.qnrHmenuId];
+                if (tObj.hoverOpen != "yes") return; // No action
+                // Record time in hmenu object
+                var tDate = new Date();
+                tObj.changeTime = tDate.getTime();
+                
+                function onMove(event){
+                    var mObj = event.target;
+                    var mObjP = mObj.parentNode;
+                    // Test mouse not over any (sub)menu, hide all after delay
+                    if ((mObj.tagName === undefined || mObjP.tagName === undefined) 
+                                                        || (!mObj.classList.contains("qnr-hmenu") 
+                                                        && !mObj.classList.contains("qnr-hmenu-submenu") 
+                                                        && !mObjP.parentNode.classList.contains("qnr-hmenu") 
+                                                        && !mObjP.classList.contains("qnr-hmenu-menu") 
+                                                        && !mObjP.parentNode.classList.contains("qnr-hmenu-menu") 
+                                                        && !mObjP.classList.contains("qnr-hmenu-submenu") 
+                                                        && !mObjP.parentNode.classList.contains("qnr-hmenu-submenu"))) {
+                        var nDate = new Date();
+                        if (nDate.getTime() - tObj.changeTime > 200) {
+                            window.removeEventListener("mousemove", onMove, false);
+                            tObj.hideMenus();
+                        }
+                    }
+                    // Test mouse not over any subholder or submenu, hide submenus after delay
+                    else if (!mObj.classList.contains("qnr-hmenu-subholder") && !mObj.classList.contains("qnr-hmenu-submenu")) {
+                        var nDate = new Date();
+                        if (nDate.getTime() - tObj.changeTime > 200) {
+                            window.removeEventListener("mousemove", onMove, false);
+                            tObj.hideSubmenus(event, "others");
+                        }
+                    }
+                    else { // Mouse is back over a (sub)menu
+                        window.removeEventListener("mousemove", onMove, false);
+                    }
+                }
+                window.addEventListener("mousemove", onMove, false);
             }
         }
     },false);
@@ -347,134 +409,7 @@ var QNR_HMENU = {};
 
 
     // ===================== UTILITY FUNCTIONS =====================
-
-    // ----------------------- Mobile device detector
-
-    function deviceIsMobile() {
-        var isMobile = /iPhone|iPad|iPod|Android|Blackberry|Nokia|Opera mini|Windows mobile|Windows phone|iemobile/i.test(navigator.userAgent);
-        return isMobile;
-    }
-
-
-    // ----------------------- File & Dir Path Getters
-
-    function getHrefDirPath() {
-        return window.location.href.substr(0,window.location.href.lastIndexOf("/"));
-    }
-
-    function getHrefDirName() {
-        var wDirPath = getHrefDirPath();
-        return wDirPath.substr(wDirPath.lastIndexOf("/")+1);
-    }
-
-    function getHrefFileName() {
-        // Assumes no query or id
-        var fn =  window.location.href.split("/").pop();
-        if (!fn) fn = "index.html"; // Avoid empty name
-        return fn;
-    }
-
-    // ----------------------- Percentage function
-
-    function rangeToPercent(number, min, max) {
-        return ((number - min) / (max - min)) * 100;
-    }
-
-    // ----------------------- Position functions
-
-    // Returns Y position of element, with given offset
-    function getYPos(elem, offsetPos) {
-        if (!offsetPos) offsetPos = 0;
-        var oPos = offsetPos;
-        if (elem.offsetParent) {
-            do {
-                oPos += elem.offsetTop;
-            } while (elem = elem.offsetParent);
-        }
-        return oPos;
-    }
-
-    // Returns X position of element, with given offset
-    function getXPos(elem, offsetPos) {
-        oPos = offsetPos;
-        if (elem.offsetParent) {
-            do {
-                oPos += elem.offsetLeft;
-            } while (elem = elem.offsetParent);
-        }
-        return oPos;
-    }
-
-    // ----------------------- Image preloader
-
-    function loadImagesIntoMemory(imgList) {
-        for (var i = 0; i < imgList.length; i++) {
-            var img = new Image();
-            img.src = imgList[i];
-        }
-    }
-
-    // ----------------------- Other functions
-
-    function async(fn, args) {
-        // Execute the passed function asynchronously
-        setTimeout(function() {fn(args);}, 0);
-    }
-
-    function print(args) {
-        console.log(args);
-    }
-
-    // ----------------------- Convenience object-getting functions
-
-    function objHtml() {
-        return document.documentElement;
-    }
-
-    function objClass(name, parent) {
-        if (!parent) {
-            return document.getElementsByClassName(name)[0];
-        }
-        else {
-            return parent.getElementsByClassName(name)[0];
-        }
-    }
-
-    function classObjs(name, parent) {
-        if (!parent) {
-            return document.getElementsByClassName(name);
-        }
-        else {
-            return parent.getElementsByClassName(name);
-        }
-    }
-
-    function objID(id, parent) {
-        if (!parent) {
-            return document.getElementById(id);
-        }
-        else {
-            return parent.getElementById(id);
-        }
-        
-    }
-
-    function objTag(tag, parent) {
-        if (!parent) {
-            return document.getElementsByTagName(tag)[0];
-        }
-        else {
-            return parent.getElementsByTagName(tag)[0];
-        }
-    }
-
-    function tagObjs(tag, parent) {
-        if (!parent) {
-            return document.getElementsByTagName(tag);
-        }
-        else {
-            return parent.getElementsByTagName(tag);
-        }
-    }
+    
+    // Removed, using global functions in Quicknr Interface
 
 })() // End of Quicknr Hmenu
