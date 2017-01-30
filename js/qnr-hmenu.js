@@ -97,6 +97,9 @@ var QNR_HMENU = {};
      * class to the widget object. This helps to time the appearance of
      * the widget in sync with the menus
      * 
+     * Delay in ms before mouseouts have effect is by default 200, and
+     * can be set with the "data-qnr-hmenu-delay" attribute
+     * 
      * -------------------------------------------------------------- */ 
 
     // ===================== STARTUP ===================== 
