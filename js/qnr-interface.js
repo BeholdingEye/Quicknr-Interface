@@ -1,6 +1,6 @@
 /* ==================================================================
  *
- *            QUICKNR INTERFACE 1.3.0
+ *            QUICKNR INTERFACE 1.4.0
  *
  *            Copyright 2016 Karl Dolenc, beholdingeye.com.
  *            All rights reserved.
@@ -58,6 +58,9 @@ var QNR_INTER = {};
      * 
      * Up and down arrows should also be winscroller widgets, see below.
      * Left and right arrows should have an onclick function assigned
+     * 
+     * The arrow can be set to stop a carousel animating, with the 
+     * "data-qnr-stop-carousel" attribute set to the ID of the carousel
      * 
      * 
      *                         Font Resize
@@ -1390,6 +1393,19 @@ var QNR_INTER = {};
     }
     NavmenuObject.prototype.createMenuIcon = function() {
         this.menuIcon = document.createElement("div");
+        // Try to work around iOS Safari problem with the window onclick event
+        var this1 = this;
+        this.menuIcon.onclick = function(event) {
+            if (this1.menuIcon) {
+                if (this1.menuIcon.classList.contains("qnr-navmenu-icon-open")) {
+                    this1.showVerticalMenu();
+                }
+                else { // Closed
+                    this1.hideVerticalMenu();
+                }
+                event.stopPropagation();
+            }
+        };
         this.menuIcon.classList.add("qnr-navmenu-icon");
         this.menuIcon.classList.add("qnr-navmenu-icon-open");
         // Place menu icon in widget DIV, now possibly empty
@@ -1551,8 +1567,8 @@ var QNR_INTER = {};
             // ----------------------- X-icon
             
             if (clicked.classList.contains("qnr-x-icon-btn")) {
+                widget.style.opacity = 0;
                 if (widget.classList.contains("qnr-remove")) {
-                    widget.style.opacity = 0;
                     window.setTimeout(function(){
                         widget.style.display = "none";
                         // Update scrollers, accounting for change of scroll
@@ -1565,7 +1581,6 @@ var QNR_INTER = {};
                     },400);
                 }
                 else {
-                    widget.style.opacity = "0";
                     window.setTimeout(function(){widget.style.visibility = "hidden";},400);
                 }
                 // TODO: callback to window, for more activity if needed (or just another function)
@@ -1789,16 +1804,17 @@ var QNR_INTER = {};
         
         // ----------------------- Navmenu icon
         
-        if (clicked.classList.contains("qnr-navmenu-icon")) {
-            if (clicked.classList.contains("qnr-navmenu-icon-open")) {
-                QNR_INTER.navmenuObject.showVerticalMenu();
-            }
-            else { // Closed
-                QNR_INTER.navmenuObject.hideVerticalMenu();
-            }
-        }
+        //if (clicked.classList.contains("qnr-navmenu-icon")) {
+            //if (clicked.classList.contains("qnr-navmenu-icon-open")) {
+                //QNR_INTER.navmenuObject.showVerticalMenu();
+            //}
+            //else { // Closed
+                //QNR_INTER.navmenuObject.hideVerticalMenu();
+            //}
+        //}
         // Dismiss navmenu on any click
-        else if (QNR_INTER.navmenuObject && document.querySelector("div.qnr-navmenu-icon-close")) {
+        //else if (QNR_INTER.navmenuObject && document.querySelector("div.qnr-navmenu-icon-close")) {
+        if (QNR_INTER.navmenuObject && document.querySelector("div.qnr-navmenu-icon-close")) {
             QNR_INTER.navmenuObject.hideVerticalMenu();
         }
         
@@ -2072,4 +2088,3 @@ function tagObjs(tag, parent) {
         return parent.getElementsByTagName(tag);
     }
 }
-    
