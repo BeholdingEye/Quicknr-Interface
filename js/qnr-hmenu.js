@@ -1,6 +1,6 @@
 /* ==================================================================
  *
- *            QUICKNR HIERARCHICAL MENU 1.1.0
+ *            QUICKNR HIERARCHICAL MENU 1.2.0
  *
  *            Copyright 2016 Karl Dolenc, beholdingeye.com.
  *            All rights reserved.
@@ -116,7 +116,8 @@ var QNR_HMENU = {};
         this.parents = []; // Containers of submenus
         this.hoverOpen = "yes"; // Open on hover or only on click
         this.changeTime = 0; // Used for mouse event delays
-        this.alignSubmenus = "no"; // Option to align submenus to parent top
+        this.delayTime = 200; // Delay in ms before mouseouts have effect
+        this.alignSubmenus = "no"; // Align submenus to parent top
     }
     HmenuObject.prototype.initialize = function() {
         // Set preferences from dataset attributes
@@ -124,6 +125,7 @@ var QNR_HMENU = {};
         if (this.object.dataset.qnrHmenuDirectionY) this.directionY = this.object.dataset.qnrHmenuDirectionY;
         if (this.object.dataset.qnrHmenuHover) this.hoverOpen = this.object.dataset.qnrHmenuHover;
         if (this.object.dataset.qnrHmenuAlign) this.alignSubmenus = this.object.dataset.qnrHmenuAlign;
+        if (this.object.dataset.qnrHmenuDelay) this.delayTime = this.object.dataset.qnrHmenuDelay;
         // Hide the main UL
         this.menu = objTag("ul", this.object);
         this.menu.classList.add("qnr-hmenu-menu");
@@ -159,7 +161,8 @@ var QNR_HMENU = {};
         if (this.hoverOpen == "yes") {
             this1 = this;
             this.object.addEventListener("mouseover", function(event) {
-                if (event.target == this1.object) {
+                // Test for hoverOpen again, in case controlled by a later script
+                if (event.target == this1.object && this1.hoverOpen == "yes") {
                     this1.hideMenus();
                     this1.menu.style.display = "block";
                     this1.object.classList.add("qnr-hmenu-hover");
@@ -370,7 +373,7 @@ var QNR_HMENU = {};
                                                         && !mObjP.classList.contains("qnr-hmenu-submenu") 
                                                         && !mObjP.parentNode.classList.contains("qnr-hmenu-submenu"))) {
                         var nDate = new Date();
-                        if (nDate.getTime() - tObj.changeTime > 200) {
+                        if (nDate.getTime() - tObj.changeTime > tObj.delayTime) {
                             window.removeEventListener("mousemove", onMove, false);
                             tObj.hideMenus();
                         }
@@ -378,7 +381,7 @@ var QNR_HMENU = {};
                     // Test mouse not over any subholder or submenu, hide submenus after delay
                     else if (!mObj.classList.contains("qnr-hmenu-subholder") && !mObj.classList.contains("qnr-hmenu-submenu")) {
                         var nDate = new Date();
-                        if (nDate.getTime() - tObj.changeTime > 200) {
+                        if (nDate.getTime() - tObj.changeTime > tObj.delayTime) {
                             window.removeEventListener("mousemove", onMove, false);
                             tObj.hideSubmenus(event, "others");
                         }
