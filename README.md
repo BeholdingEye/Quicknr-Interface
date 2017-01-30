@@ -66,7 +66,12 @@ Included widgets are:
 Change Log
 ----------
 
-Version 1.3.1 - 4 December 2015
+Version 1.4.0 - 30 January 2017
+
+  * Navigator Menu now works correctly on iPhone
+  * Other small fixes and improvements
+  
+Version 1.3.1 - 4 December 2016
 
   README corrected.
 
