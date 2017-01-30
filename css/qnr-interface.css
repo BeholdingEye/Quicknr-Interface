@@ -32,6 +32,9 @@ body {
     font-size: 17px;
     text-align: center;
     background-color: white;
+    
+    /* iPhone inconsistent text sizing fix */
+    -webkit-text-size-adjust: 100%;
 }
 
 
@@ -133,7 +136,9 @@ div.qnr-arrow-anim {
     margin: 0 auto;
     padding: 0.3em;
     width: 1em;
+    height: 1em;
     font-size: 2em;
+    line-height: 1em;
     color: #EEE;
     border-radius: 50%;
     border: solid 3px #EEE;
