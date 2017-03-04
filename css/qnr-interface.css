@@ -232,6 +232,7 @@ div.qnr-responsive-item {
     /* Widget itself */
 }
 
+/* The arrow, if widget is BODY */
 span.qnr-winscroller-arrow {
     display: block;
     position: fixed;
@@ -241,8 +242,11 @@ span.qnr-winscroller-arrow {
     right: 0;
     top: auto;
     left: auto;
+    width: 25px;
+    height: 25px;
     font-family: Quicknr;
     font-size: 24px;
+    line-height: 1em;
     color: #999;
     text-decoration: none;
     visibility: hidden;
@@ -406,10 +410,15 @@ div.qnr-carousel-controlstrip {
     margin: 0;
     padding: 0;
     left: 50%;
-    transform: translateX(-50%);
     margin-right: -50%;
+    -o-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    -moz-transform: translateX(-50%);
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%); 
     bottom: 16px;
     width: auto;
+    max-width: 90%;
 /*
     height: 40px;
 */
@@ -493,8 +502,18 @@ span.qnr-carousel-bigarrow-right {
     position: absolute;
     margin: 0;
     padding: 8px;
+/*
     top: 50%;
     transform: translateY(-50%);
+*/
+    
+    top: 50%;
+    -o-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    
     font-family: Quicknr;
 }
 
@@ -974,19 +993,28 @@ div.qnr-navmenu {
     padding: 0;
     width: 100%;
     height: 54px;
-    font-size: 0.9em;
+    color: gray;
     visibility: hidden;     /* Will be made visible by JS */
     background-color: white;
-    z-index: 500;
+    z-index: 999;
 }
-div.qnr-navmenu ul {
+
+/* Styling limited to immediate children so we don't style any contained hmenus */
+
+/* No-wrapper styling will be active when menu expanded, not collapsed */
+div.qnr-navmenu > ul {
     display: block;
     position: relative;
     margin: 0;
     padding: 0;
     list-style-type: none;
     box-sizing: border-box;
+    
+    /* From qnr-navmenu-expanded */
+    width: 100%;
+    text-align: right;
 }
+
 
 /* Wrapper created by code, for positioning */
 
@@ -997,55 +1025,135 @@ div.qnr-navmenu-wrapper {
     padding: 0;
     width: 100%;
     height: 0;      /* Wrapper itself not taking any space */
+    color: gray;
     overflow: visible;
+    z-index: 999;
+}
+div.qnr-navmenu-wrapper > ul {
+    background-color: white;
 }
 
 /* Menu items */
 
-div.qnr-navmenu ul li,
-div.qnr-navmenu-wrapper ul li {
+div.qnr-navmenu > ul > li,
+div.qnr-navmenu-wrapper > ul > li {
     display: inline-block;
     position: relative;
+    height: 2em;
+    margin: 0;
+    padding: 0;     /* Will be overriden by hmenu holders below */
+    font-size: 1em;
+    vertical-align: middle;
     white-space: nowrap;
     box-sizing: border-box;
-    background-color: white;
-}
-div.qnr-navmenu ul li a,
-div.qnr-navmenu-wrapper ul li a {       /* Text links, not buttons */
-    display: inline-block;
-    position: relative;
+    
+    /* From ul.qnr-navmenu-vertical -horizontal */
     width: 100%;
-    text-decoration: none;
-    text-transform: uppercase;
-    color: gray;
-    box-sizing: border-box;
-    outline: none;
+    text-align: left;
+    border: none;
+    border-top: dotted thin silver;
 }
-div.qnr-navmenu ul li a:hover,
-div.qnr-navmenu-wrapper ul li a:hover {
-    cursor: pointer;
-    color: black;
-}
-
-/* Expanded, desktop */
-
-div.qnr-navmenu-expanded ul {
-    width: 100%;
-    text-align: right;
-}
-div.qnr-navmenu-expanded ul li {
+div.qnr-navmenu > ul > li {
+    /* From qnr-navmenu-expanded > ul > li */
     margin: 1em;
     padding: 0;
     width: auto;
     text-align: center;
-}
-div.qnr-navmenu-expanded ul li a {
-    margin: 0;
-    padding: 0.4em;
-    border: none;
+    border: solid thin silver;
 }
 
-/* Collapsed, mobile */
+div.qnr-navmenu > ul > li > a,
+div.qnr-navmenu-wrapper > ul > li > a {       /* Text links, not buttons */
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0;     /* Will be overriden below */
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    text-transform: uppercase;
+    color: inherit;
+    box-sizing: border-box;
+    outline: none;
+    border: none;
+}
+/* Account for hmenu holder with no <A> tag */
+div.qnr-navmenu > ul > li.qnr-hmenu,
+div.qnr-navmenu > ul > li > a,
+div.qnr-navmenu-wrapper > ul > li.qnr-hmenu,
+div.qnr-navmenu-wrapper > ul > li > a {
+    padding: 0.5em;
+}
+div.qnr-navmenu > ul > li.qnr-hmenu {  
+    /* From  qnr-navmenu-expanded > ul > li.qnr-hmenu */
+    padding-right: 3em;
+}
+div.qnr-navmenu-wrapper > ul > li.qnr-hmenu {
+    /* From div.qnr-navmenu-wrapper > ul > li.qnr-hmenu.qnr-hmenu-in-collapsed */
+    height: auto;       /* Adjusting to contained menu */
+    min-height: 2em;    /* Matching nav menu LI settings above */
+    padding-right: 0;
+}
+
+div.qnr-navmenu > ul > li.qnr-hmenu:hover,
+div.qnr-navmenu-wrapper > ul > li.qnr-hmenu:hover,
+div.qnr-navmenu > ul > li > a:hover,
+div.qnr-navmenu-wrapper > ul > li > a:hover {
+    cursor: pointer;
+    color: black;
+    background-color: #F8F8F8;
+}
+div.qnr-navmenu > ul > li.qnr-hmenu:hover, /* Must be specific */
+div.qnr-navmenu > ul > li > a:hover {
+    background-color: transparent;
+}
+
+/* Triangle-down following submenu holding item */
+div.qnr-navmenu > ul > li.qnr-hmenu::after,
+div.qnr-navmenu-wrapper > ul > li.qnr-hmenu::after {
+    content: "A";
+    display: block;
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    top: 0.5em;
+    right: 0.5em;
+    color: silver;
+    font-family: Quicknr;
+    vertical-align: top;
+    line-height: 1em;
+}
+/* Override with Triangle-up when hmenu is open */
+div.qnr-navmenu > ul > li.qnr-hmenu.qnr-hmenu-hover::after,
+div.qnr-navmenu-wrapper > ul > li.qnr-hmenu.qnr-hmenu-hover::after {
+    content: "B";
+}
+
+/* Expanded, desktop */
+
+/*
+div.qnr-navmenu-expanded > ul {
+    width: 100%;
+    text-align: right;
+}
+*/
+/*
+div.qnr-navmenu-expanded > ul > li {
+    margin: 1em;
+    padding: 0;
+    width: auto;
+    text-align: center;
+    border: solid thin silver;
+}
+*/
+/*
+div.qnr-navmenu-expanded > ul > li.qnr-hmenu {
+    padding: 0.5em;
+    padding-right: 3em;
+}
+*/
+
+/* Collapsed, mobile (applied to widget DIV that no longer holds the menu UL) */
 
 div.qnr-navmenu-collapsed {
     overflow: visible;
@@ -1129,26 +1237,43 @@ ul.qnr-navmenu-vertical-hidden-left {
     top: 0;
     left: -500px;
 }
-ul.qnr-navmenu-vertical li,
-ul.qnr-navmenu-vertical-horizontal li {
+/*
+ul.qnr-navmenu-vertical > li,
+ul.qnr-navmenu-vertical-horizontal > li {
     margin: 0;
-    padding: 0;
     width: 100%;
     text-align: left;
-}
-ul.qnr-navmenu-vertical li {
-    text-align: center;
-}
-ul.qnr-navmenu-vertical li a,
-ul.qnr-navmenu-vertical-horizontal li a {
-    padding: 2em;
+    border: none;
     border-top: dotted thin silver;
 }
-ul.qnr-navmenu-vertical li a:hover,
-ul.qnr-navmenu-vertical-horizontal li a:hover {
+ul.qnr-navmenu-vertical > li {
+    text-align: left;
+}
+*/
+/*
+ul.qnr-navmenu-vertical > li > a,
+ul.qnr-navmenu-vertical-horizontal > li > a {
+}
+li.qnr-hmenu-in-collapsed:hover,
+ul.qnr-navmenu-vertical > li > a:hover,
+ul.qnr-navmenu-vertical-horizontal > li > a:hover {
     background-color: #F8F8F8;
 }
+*/
 
+/* Hmenu override in collapsed navmenu */
+/*
+div.qnr-navmenu-wrapper > ul > li.qnr-hmenu.qnr-hmenu-in-collapsed {
+    height: auto;
+    min-height: 2em;
+    padding-right: 0;
+}
+*/
+/*
+li.qnr-hmenu.qnr-hmenu-in-collapsed:hover {
+    background-color: #F8F8F8;
+}
+*/
 
 /* PARALLAX SCROLLER
  * ----------------------------------------------------- */
@@ -1159,7 +1284,9 @@ div.qnr-scroller {
     margin: 0;
     padding: 0;
     width: 100%;
+/*
     height: 300px;
+*/
     color: white;
     text-align: center;
     background-color: #EEE;
@@ -1168,6 +1295,21 @@ div.qnr-scroller {
     background-position: 50% 50%;
     background-size: cover;
     background-repeat: no-repeat;
+}
+
+/* ----------------------------- Carousel Item Scroller Override */
+
+div.qnr-carousel > div.qnr-carousel-item.qnr-scroller {
+    display: block;
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
 }
 
 

@@ -63,9 +63,20 @@ Included widgets are:
 
   In addition, since version 1.2.0, a separate widget, hierarchical menu, has been added. The menu is separately deployable because most websites will not require it. However, the menu depends on the rest of the QI files, that must be linked to earlier in the HTML source code. The menu is presently not compatible with the collapsing navbar widget in the interface package.
 
+14. **Aspect Keeper**
+
+  New in version 1.5.0 is this widget, preserving the object's aspect ratio at different screen sizes. This helps prevent images and videos displaying "tall" when they should be "narrow", usually on mobile screens in portrait mode.
+
 Change Log
 ----------
 
+Version 1.5.0 - 4 March 2017
+
+  * Navigator Menu now supports Hierarchical Menus as submenus, compatible with Wordpress menus when used with the QNRWP-A theme
+  * Aspect Keeper widget added, keeping the object's aspect ratio at different screen sizes
+  * Carousel slides may now be parrallax Scrollers as well
+  * Many other fixes and improvements
+  
 Version 1.4.0 - 30 January 2017
 
   * Navigator Menu now works correctly on iPhone

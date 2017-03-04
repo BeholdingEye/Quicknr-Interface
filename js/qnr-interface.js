@@ -1,6 +1,6 @@
 /* ==================================================================
  *
- *            QUICKNR INTERFACE 1.4.0
+ *            QUICKNR INTERFACE 1.5.0
  *
  *            Copyright 2016 Karl Dolenc, beholdingeye.com.
  *            All rights reserved.
@@ -72,7 +72,7 @@ var QNR_INTER = {};
      * for the element as the largest size, for desktops. Mobiles will 
      * reduce the font size. The reference display area is 1,400x900px,
      * 1,260,000 square pixels. Larger areas have no effect. Smallest
-     * area is considered to be 320x480px, 153,600 square pixels, and
+     * area is considered to be 320x320px, 102400 square pixels, and
      * will be the display area size with the minimum font size
      * 
      * The minimum percentage size can be specified with the dataset
@@ -162,6 +162,10 @@ var QNR_INTER = {};
      * "data-qnr-strip"
      * "data-qnr-previews"
      * "data-qnr-thumb-numbers"
+     * 
+     * If a "data-qnr-scroller" attribute is set to "on" (default "off")
+     * slide item DIVs will receive the "qnr-scroller" class, making
+     * them Parallax Scroller widgets
      * 
      * The time it takes between loading of the page and the start of 
      * play can be set with the "data-qnr-start-interval" 
@@ -354,6 +358,9 @@ var QNR_INTER = {};
      * To position an element - such as a logo - to the left of the 
      * menu, place it before the menu UL in the widget DIV and float it
      * 
+     * Hierarchical menus from "qnr-hmenu.js" are now supported by the
+     * navmenu, and there is some cross-reference to both in the code
+     * 
      * 
      *                         Scrollers
      * 
@@ -421,6 +428,15 @@ var QNR_INTER = {};
      * <DIV> tags, as well as others. Other tags such as headings 
      * may be placed between question-answer groups, but the question 
      * <P> and answer <DIV> must be next to each other
+     * 
+     * 
+     *                         Aspect Keeper
+     * 
+     * An element with the class of "qnr-aspect-keeper" will keep its
+     * aspect ratio, 1.5 by default, and settable with the dataset
+     * attribute "data-qnr-aspect-ratio". The aspect ratio is preserved 
+     * by using the width as the base of calculation for the height. 
+     * Computed CSS values for min and max height are respected
      * 
      * 
      *                         Layout Helpers
@@ -569,14 +585,39 @@ var QNR_INTER = {};
     QNR_INTER.arrowanimsL = null;
     QNR_INTER.arrowanimObjectsL = [];
     
+    QNR_INTER.aspectkeepersL = null;
+    QNR_INTER.aspectkeeperObjectsL = [];
+    
+    
+    // ----------------------- ASPECT KEEPER
+    
+    function AspectkeeperObject() {
+        this.object                 = null;
+        this.aspectRatio            = 1.5;
+    }
+    AspectkeeperObject.prototype.initialize = function() {
+        if (this.object.dataset.qnrAspectRatio) this.aspectRatio = this.object.dataset.qnrAspectRatio;
+        this.setHeight();
+    }
+    AspectkeeperObject.prototype.setHeight = function() {
+        // Must work on load and resize...
+        // Limit the height by min and max CSS
+        var minH = (window.getComputedStyle(this.object, "").minHeight == "0px") ? 0 : 
+                        parseFloat(window.getComputedStyle(this.object, "").minHeight.replace("px",""));
+        var maxH = (window.getComputedStyle(this.object, "").maxHeight == "none") ? 9999 : 
+                        parseFloat(window.getComputedStyle(this.object, "").maxHeight.replace("px",""));
+        newHeight = this.object.offsetWidth * (1.0/this.aspectRatio);
+        if (newHeight > minH && newHeight < maxH) this.object.style.height = newHeight + "px";
+    }
+    
     
     // ----------------------- ARROW ANIM
     
     function ArrowanimObject() {
-        this.object = null;
-        this.arrowSpan = null;
-        this.direction = "down";
-        this.stopCarousel = null;
+        this.object                 = null;
+        this.arrowSpan              = null;
+        this.direction              = "down";
+        this.stopCarousel           = null;
     }
     ArrowanimObject.prototype.initialize = function() {
         // Stop a carousel?
@@ -607,14 +648,12 @@ var QNR_INTER = {};
     // ----------------------- FONT RESIZE
     
     function FontresizeObject() {
-        this.object = null;
-        // Original size
-        this.origSize = 0;
-        this.min = 80.0;
-        // Inverse of min
-        this.rangeF = 20.0;
+        this.object                 = null;
+        this.origSize               = 0; // Original size
+        this.min                    = 80.0;
+        this.rangeF                 = 20.0; // Inverse of min
         // The difference between min and max area that is considered
-        this.rangeA = 1106400;
+        this.rangeA                 = 1106400;
     }
     FontresizeObject.prototype.initialize = function() {
         if (this.object.dataset.qnrFontMin) this.min = parseFloat(this.object.dataset.qnrFontMin);
@@ -625,7 +664,7 @@ var QNR_INTER = {};
     FontresizeObject.prototype.resize = function() {
         // Resize according to display area
         var area = objHtml().clientWidth * objHtml().clientHeight;
-        if (153600 <= area && area <= 1260000) {
+        if (102400 <= area && area <= 1260000) {
             var delta = 1260000 - area;
             var factor = delta/this.rangeA;
             this.object.style.fontSize = (((100.0 - (this.rangeF * factor))/100.0) * this.origSize) + "px";
@@ -633,11 +672,12 @@ var QNR_INTER = {};
         else if (area > 1260000) this.object.style.fontSize = this.origSize + "px";
     }
     
+    
     // ----------------------- RESPONSIVE
     
     function ResponsiveObject() {
-        this.object = null;
-        this.divItems = [];
+        this.object                 = null;
+        this.divItems               = [];
     }
     ResponsiveObject.prototype.initialize = function() {
         var objChildren = this.object.children;
@@ -651,14 +691,12 @@ var QNR_INTER = {};
     // ----------------------- WINSCROLLER
     
     function WinscrollerObject() {
-        this.object = null;
-        // Target object to scroll to
-        this.targetObj = null;
-        // Offset the scroll by this many pixels
-        this.offset = 0;
+        this.object                 = null;
+        this.targetObj              = null; // Target object to scroll to
+        this.offset                 = 0; // Offset the scroll by this many pixels
         // Page fraction to be scrolled down before up arrow will appear,
-        // if winscroller is the BODY (as SPAN element created below)
-        this.winscrollFraction = 0.25;
+        //   if winscroller is the BODY (as SPAN element created below)
+        this.winscrollFraction      = 0.25;
     }
     WinscrollerObject.prototype.initialize = function() {
         // Set up winscroller, either BODY or an element within
@@ -698,6 +736,7 @@ var QNR_INTER = {};
         this.navArrows              = "on";
         this.navStrip               = "on";
         this.navPreviews            = "on"; // Note thumbPreviews also
+        this.cStripDiv              = null;
         this.captions               = "off";
         this.captionDiv             = null;
         this.arrowLeft              = null;
@@ -721,12 +760,31 @@ var QNR_INTER = {};
         this.scrollOffset           = 0;
         // Preference for setting slide numbers in thumb circles
         this.thumbNumbers           = "off";
+        // Set item DIVs as Parallax Scrollers with "qnr-scroller" class
+        this.itemScroller           = "off";
     }
     CarouselObject.prototype.initialize = function() {
         if (!this.object.hasChildNodes() || this.object.children.length < 2) {
             print("Error: Carousel requires at least 2 DIV or IMG items.");
             return;
         }
+        
+        // Get user preferences on navigation elements, scroll offset, auto resuming, etc.
+        if (this.object.dataset.qnrArrows) this.navArrows = this.object.dataset.qnrArrows;
+        if (this.object.dataset.qnrStrip) this.navStrip = this.object.dataset.qnrStrip;
+        if (this.object.dataset.qnrPreviews) this.navPreviews = this.object.dataset.qnrPreviews;
+        if (this.object.dataset.qnrResumeAuto) this.resumeAuto = this.object.dataset.qnrResumeAuto;
+        if (this.object.dataset.qnrScrollOffset) this.scrollOffset = parseInt(this.object.dataset.qnrScrollOffset);
+        if (this.object.dataset.qnrMode) this.transitionMode = this.object.dataset.qnrMode;
+        if (this.object.dataset.qnrTransition) this.transitionTime = parseFloat(this.object.dataset.qnrTransition);
+        if (this.object.dataset.qnrStartInterval) this.carouselStartInterval = parseFloat(this.object.dataset.qnrStartInterval);
+        if (this.object.dataset.qnrInterval) this.carouselInterval = parseFloat(this.object.dataset.qnrInterval);
+        if (this.object.dataset.qnrCaptions) this.captions = this.object.dataset.qnrCaptions;
+        if (this.object.dataset.qnrThumbNumbers) this.thumbNumbers = this.object.dataset.qnrThumbNumbers;
+        if (this.object.dataset.qnrScroller) this.itemScroller = this.object.dataset.qnrScroller;
+        // Set thumb preview property if preference "on" and device not mobile
+        if (!deviceIsMobile() && this.navPreviews == "on") this.thumbPreviews = true;
+        
         // ----------------------- List carousel items
         var objChildren = this.object.children;
         for (var i = 0; i < objChildren.length; i++) {
@@ -745,23 +803,13 @@ var QNR_INTER = {};
             }
             // Assign class
             this.carouselItemsL[i].classList.add("qnr-carousel-item");
+            // Assign Scroller class if set so
+            if (this.itemScroller == "on") this.carouselItemsL[i].classList.add("qnr-scroller");
             // Assign dataset ID
             this.carouselItemsL[i].dataset.qnrCarouselItemId = i;
+            // Display the slides
+            this.carouselItemsL[i].style.display = "block";
         }
-        // Get user preferences on navigation elements, scroll offset, auto resuming, etc.
-        if (this.object.dataset.qnrArrows) this.navArrows = this.object.dataset.qnrArrows;
-        if (this.object.dataset.qnrStrip) this.navStrip = this.object.dataset.qnrStrip;
-        if (this.object.dataset.qnrPreviews) this.navPreviews = this.object.dataset.qnrPreviews;
-        if (this.object.dataset.qnrResumeAuto) this.resumeAuto = this.object.dataset.qnrResumeAuto;
-        if (this.object.dataset.qnrScrollOffset) this.scrollOffset = parseInt(this.object.dataset.qnrScrollOffset);
-        if (this.object.dataset.qnrMode) this.transitionMode = this.object.dataset.qnrMode;
-        if (this.object.dataset.qnrTransition) this.transitionTime = parseFloat(this.object.dataset.qnrTransition);
-        if (this.object.dataset.qnrStartInterval) this.carouselStartInterval = parseFloat(this.object.dataset.qnrStartInterval);
-        if (this.object.dataset.qnrInterval) this.carouselInterval = parseFloat(this.object.dataset.qnrInterval);
-        if (this.object.dataset.qnrCaptions) this.captions = this.object.dataset.qnrCaptions;
-        if (this.object.dataset.qnrThumbNumbers) this.thumbNumbers = this.object.dataset.qnrThumbNumbers;
-        // Set thumb preview property if preference "on" and device not mobile
-        if (!deviceIsMobile() && this.navPreviews == "on") this.thumbPreviews = true;
         // ----------------------- Create arrows
         if (this.navArrows == "on") {
             this.arrowLeft = document.createElement("span");
@@ -795,8 +843,8 @@ var QNR_INTER = {};
         
         // ----------------------- Create control strip
         if (this.navStrip == "on") {
-            var cStripDiv = document.createElement("div");
-            cStripDiv.className = "qnr-carousel-controlstrip";
+            this.cStripDiv = document.createElement("div");
+            this.cStripDiv.className = "qnr-carousel-controlstrip";
             var cStrip = "";
             var slideNum = "";
             // SPANs for all the img thumbs or just circles
@@ -810,9 +858,9 @@ var QNR_INTER = {};
                     cStrip += '<span class="qnr-carousel-thumb" data-qnr-carousel-thumb-id="'+i+'">'+slideNum+'</span>';
                 }
             }
-            cStripDiv.innerHTML = cStrip;
+            this.cStripDiv.innerHTML = cStrip;
             // Place control strip in carousel
-            this.object.appendChild(cStripDiv);
+            this.object.appendChild(this.cStripDiv);
             // Add inactive class and click event handlers to thumbs
             var thumbs = classObjs("qnr-carousel-thumb", this.object);
             for (var i = 0; i < thumbs.length; i++) {
@@ -845,21 +893,34 @@ var QNR_INTER = {};
         // Set border/bg color of first thumb to active, the rest remains inactive
         if (this.navStrip == "on") {
             if (this.thumbNumbers == "on") {
-                objTag("span", cStripDiv).classList.remove("qnr-carousel-thumb-number-inactive");
-                objTag("span", cStripDiv).classList.add("qnr-carousel-thumb-number-active");
+                objTag("span", this.cStripDiv).classList.remove("qnr-carousel-thumb-number-inactive");
+                objTag("span", this.cStripDiv).classList.add("qnr-carousel-thumb-number-active");
             }
             else {
-                objTag("span", cStripDiv).classList.remove("qnr-carousel-thumb-inactive");
-                objTag("span", cStripDiv).classList.add("qnr-carousel-thumb-active");
+                objTag("span", this.cStripDiv).classList.remove("qnr-carousel-thumb-inactive");
+                objTag("span", this.cStripDiv).classList.add("qnr-carousel-thumb-active");
             }
-            //objTag("span", cStripDiv).style.borderColor = this.thumbBorderColorActive;
-            //objTag("span", cStripDiv).style.backgroundColor = this.thumbBGColorActive;
+            //objTag("span", this.cStripDiv).style.borderColor = this.thumbBorderColorActive;
+            //objTag("span", this.cStripDiv).style.backgroundColor = this.thumbBGColorActive;
         }
+        
+        this.styleCarousel();
         
         this.startCarouselTimer();
         
         // Start async loading of the rest of the images
         async(loadImagesIntoMemory, this.itemUrlsL.slice(1));
+    }
+    CarouselObject.prototype.styleCarousel = function() {
+        // This must work on load and resize...
+        // Hide the control strip if it would be higher than one row
+        if (this.navStrip == "on") {
+            if (this.cStripDiv.offsetHeight > 50) {
+                print(this.cStripDiv.offsetHeight);
+                this.cStripDiv.style.display = "none";
+            }
+            else this.cStripDiv.style.display = "block";
+        }
     }
     CarouselObject.prototype.onScrollCarousel = function() {
         if (window.pageYOffset >= this.object.offsetHeight + getYPos(this.object) - this.scrollOffset && this.carouselTimer) {
@@ -1315,7 +1376,7 @@ var QNR_INTER = {};
     
     function NavmenuObject() {
         this.object         = null;
-        this.menuList       = null;
+        this.menuUL         = null;
         this.menuItemsL     = [];
         this.itemHeight     = 0;
         this.menuIcon       = null;
@@ -1326,8 +1387,10 @@ var QNR_INTER = {};
     }
     NavmenuObject.prototype.initialize = function() {
         if (this.object.dataset.qnrDirection) this.direction = this.object.dataset.qnrDirection;
-        this.menuList = this.object.querySelector("ul");
-        this.menuItemsL = this.object.querySelectorAll("li");
+        this.menuUL = this.object.querySelector("ul");
+        // Add a class to the UL to make the next line more specific
+        this.menuUL.classList.add("qnr-navmenu-ul");
+        this.menuItemsL = this.object.querySelectorAll("ul.qnr-navmenu-ul > li");
         // Get dimensions of first LI item (traversing all does not work)
         this.itemHeight = this.menuItemsL[0].offsetHeight;
         // Style menu, expanded or collapsed
@@ -1342,24 +1405,30 @@ var QNR_INTER = {};
         // If top of items less than item height, style expanded, else collapsed
         this.object.classList.remove("qnr-navmenu-collapsed");
         this.object.classList.add("qnr-navmenu-expanded");
+        // Remove "qnr-hmenu-in-collapsed" class from any LI items as hmenu widgets
+        for (var x = 0; x < this.menuItemsL.length; x++) {
+            if (this.menuItemsL[x].classList.contains("qnr-hmenu-in-collapsed")) {
+                this.menuItemsL[x].classList.remove("qnr-hmenu-in-collapsed");
+            }
+        }
         if (this.menuWrapper) {
             // Remove wrapper and place menu list back in widget DIV
-            this.object.appendChild(this.menuWrapper.removeChild(this.menuList));
+            this.object.appendChild(this.menuWrapper.removeChild(this.menuUL));
             this.menuWrapper.parentNode.removeChild(this.menuWrapper);
             this.menuWrapper = null;
         }
         if (this.menuIcon) {
-            this.menuList.classList.remove("qnr-navmenu-vertical");
-            this.menuList.classList.remove("qnr-navmenu-vertical-horizontal");
+            this.menuUL.classList.remove("qnr-navmenu-vertical");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-horizontal");
             if (this.direction == "vertical") {
-                this.menuList.classList.remove("qnr-navmenu-vertical-show");
-                this.menuList.classList.remove("qnr-navmenu-vertical-hide");
-                this.menuList.classList.remove("qnr-navmenu-vertical-hidden");
+                this.menuUL.classList.remove("qnr-navmenu-vertical-show");
+                this.menuUL.classList.remove("qnr-navmenu-vertical-hide");
+                this.menuUL.classList.remove("qnr-navmenu-vertical-hidden");
             }
             else {
-                this.menuList.classList.remove("qnr-navmenu-vertical-show-right");
-                this.menuList.classList.remove("qnr-navmenu-vertical-hide-left");
-                this.menuList.classList.remove("qnr-navmenu-vertical-hidden-left");
+                this.menuUL.classList.remove("qnr-navmenu-vertical-show-right");
+                this.menuUL.classList.remove("qnr-navmenu-vertical-hide-left");
+                this.menuUL.classList.remove("qnr-navmenu-vertical-hidden-left");
             }
             this.object.removeChild(this.menuIcon);
             this.menuIcon = null;
@@ -1369,27 +1438,46 @@ var QNR_INTER = {};
             if (this.menuItemsL[i].offsetTop >= this.itemHeight) {
                 this.object.classList.remove("qnr-navmenu-expanded");
                 this.object.classList.add("qnr-navmenu-collapsed");
+                // Assign "qnr-hmenu-in-collapsed" class to any LI items as hmenu widgets
+                for (var x = 0; x < this.menuItemsL.length; x++) {
+                    if (this.menuItemsL[x].classList.contains("qnr-hmenu")) {
+                        this.menuItemsL[x].classList.add("qnr-hmenu-in-collapsed");
+                        // Clear left/up classes from submenus of hmenu
+                        var hmSubs = classObjs("qnr-hmenu-submenu-left", this.menuItemsL[x]);
+                        for (var z = hmSubs.length - 1; z >= 0; z--) {
+                            hmSubs[z].classList.remove("qnr-hmenu-submenu-left");
+                        }
+                        hmSubs = classObjs("qnr-hmenu-submenu-up", this.menuItemsL[x]);
+                        for (var z = hmSubs.length - 1; z >= 0; z--) {
+                            hmSubs[z].classList.remove("qnr-hmenu-submenu-up");
+                        }
+                        
+                    }
+                }
                 // Create vertical menu, and hide it, up/down or left/right
                 if (!this.menuWrapper) {
                     // Wrap menu UL in new DIV to place it in DOM after widget DIV
                     this.menuWrapper = document.createElement("div");
                     this.menuWrapper.className = "qnr-navmenu-wrapper";
-                    this.menuWrapper.appendChild(this.object.removeChild(this.menuList));
-                    // Place wrapped menu after menu DIV, assuming at least one sibling follows it
+                    this.menuWrapper.appendChild(this.object.removeChild(this.menuUL));
+                    // Place wrapped menu after menu DIV
                     this.object.parentNode.insertBefore(this.menuWrapper, this.object.nextSibling);
                 }
                 if (this.direction == "vertical") {
-                    this.menuList.classList.add("qnr-navmenu-vertical");
-                    this.menuList.classList.add("qnr-navmenu-vertical-hidden");
+                    this.menuUL.classList.add("qnr-navmenu-vertical");
+                    this.menuUL.classList.add("qnr-navmenu-vertical-hidden");
                 }
                 else {
-                    this.menuList.classList.add("qnr-navmenu-vertical-horizontal");
-                    this.menuList.classList.add("qnr-navmenu-vertical-hidden-left");
+                    this.menuUL.classList.add("qnr-navmenu-vertical-horizontal");
+                    this.menuUL.classList.add("qnr-navmenu-vertical-hidden-left");
                 }
                 if (!this.menuIcon) this.createMenuIcon();
                 break;
             }
         }
+        //if (this.object.classList.contains("qnr-navmenu-expanded") && QNR_HMENU.hmenuObjectsL) {
+            //QNR_HMENU.hmenuObjectsL[0].hideMenus();
+        //}
     }
     NavmenuObject.prototype.createMenuIcon = function() {
         this.menuIcon = document.createElement("div");
@@ -1426,16 +1514,16 @@ var QNR_INTER = {};
         }
         // Show vertical menu list
         if (this.direction == "vertical") {
-            this.menuList.classList.remove("qnr-navmenu-vertical-hide");
-            this.menuList.classList.remove("qnr-navmenu-vertical-hidden");
-            this.menuList.classList.add("qnr-navmenu-vertical");
-            this.menuList.classList.add("qnr-navmenu-vertical-show");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-hide");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-hidden");
+            this.menuUL.classList.add("qnr-navmenu-vertical");
+            this.menuUL.classList.add("qnr-navmenu-vertical-show");
         }
         else {
-            this.menuList.classList.remove("qnr-navmenu-vertical-hide-left");
-            this.menuList.classList.remove("qnr-navmenu-vertical-hidden-left");
-            this.menuList.classList.add("qnr-navmenu-vertical-horizontal");
-            this.menuList.classList.add("qnr-navmenu-vertical-show-right");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-hide-left");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-hidden-left");
+            this.menuUL.classList.add("qnr-navmenu-vertical-horizontal");
+            this.menuUL.classList.add("qnr-navmenu-vertical-show-right");
         }
     }
     NavmenuObject.prototype.hideVerticalMenu = function() {
@@ -1444,19 +1532,23 @@ var QNR_INTER = {};
         this.menuIcon.classList.add("qnr-navmenu-icon-open");
         // Hide vertical menu list
         if (this.direction == "vertical") {
-            this.menuList.classList.remove("qnr-navmenu-vertical-show");
-            this.menuList.classList.remove("qnr-navmenu-vertical-hidden");
-            this.menuList.classList.add("qnr-navmenu-vertical-hide");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-show");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-hidden");
+            this.menuUL.classList.add("qnr-navmenu-vertical-hide");
             var that = this;
             window.setTimeout(function(){
-                that.menuList.classList.add("qnr-navmenu-vertical-hidden");
-                that.menuList.classList.remove("qnr-navmenu-vertical-hide");
+                that.menuUL.classList.add("qnr-navmenu-vertical-hidden");
+                that.menuUL.classList.remove("qnr-navmenu-vertical-hide");
             },1000);
         }
         else {
-            this.menuList.classList.remove("qnr-navmenu-vertical-show-right");
-            this.menuList.classList.remove("qnr-navmenu-vertical-hidden-left");
-            this.menuList.classList.add("qnr-navmenu-vertical-hide-left");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-show-right");
+            this.menuUL.classList.remove("qnr-navmenu-vertical-hidden-left");
+            this.menuUL.classList.add("qnr-navmenu-vertical-hide-left");
+        }
+        // Hide any hmenus
+        if (QNR_HMENU.hmenuObjectsL) {
+            QNR_HMENU.hmenuObjectsL[0].hideMenus();
         }
     }
     NavmenuObject.prototype.onWinScroll = function() {
@@ -1625,6 +1717,21 @@ var QNR_INTER = {};
         window.scrollBy(0, -1);
         
         
+        // ----------------------- Aspect Keepers
+        QNR_INTER.aspectkeepersL = classObjs("qnr-aspect-keeper");
+        if (QNR_INTER.aspectkeepersL) {
+            for (var i = 0; i < QNR_INTER.aspectkeepersL.length; i++) {
+                // Create a data- id attribute on the aspect keeper
+                QNR_INTER.aspectkeepersL[i].dataset.qnrAspectkeeperId = i;
+                // Create a new JS object for the aspect keeper
+                QNR_INTER.aspectkeeperObjectsL.push(new AspectkeeperObject());
+                QNR_INTER.aspectkeeperObjectsL[i].object = QNR_INTER.aspectkeepersL[i];
+                // Initialize object
+                QNR_INTER.aspectkeeperObjectsL[i].initialize();
+            }
+        }
+        
+        
         // ----------------------- Arrow Anims
         QNR_INTER.arrowanimsL = classObjs("qnr-arrow-anim");
         if (QNR_INTER.arrowanimsL) {
@@ -1636,21 +1743,6 @@ var QNR_INTER = {};
                 QNR_INTER.arrowanimObjectsL[i].object = QNR_INTER.arrowanimsL[i];
                 // Initialize object
                 QNR_INTER.arrowanimObjectsL[i].initialize();
-            }
-        }
-        
-        
-        // ----------------------- Font Resizes
-        QNR_INTER.fontresizesL = classObjs("qnr-font-resize");
-        if (QNR_INTER.fontresizesL) {
-            for (var i = 0; i < QNR_INTER.fontresizesL.length; i++) {
-                // Create a data- id attribute on the font resize
-                QNR_INTER.fontresizesL[i].dataset.qnrFontresizeId = i;
-                // Create a new JS object for the font resize
-                QNR_INTER.fontresizeObjectsL.push(new FontresizeObject());
-                QNR_INTER.fontresizeObjectsL[i].object = QNR_INTER.fontresizesL[i];
-                // Initialize object
-                QNR_INTER.fontresizeObjectsL[i].initialize();
             }
         }
         
@@ -1790,6 +1882,23 @@ var QNR_INTER = {};
                 QNR_INTER.accordionObjectsL[i].initializeItems();
             }
         }
+        
+        
+        // ----------------------- Font Resizes
+        
+        // Make this one last...
+        QNR_INTER.fontresizesL = classObjs("qnr-font-resize");
+        if (QNR_INTER.fontresizesL) {
+            for (var i = 0; i < QNR_INTER.fontresizesL.length; i++) {
+                // Create a data- id attribute on the font resize
+                QNR_INTER.fontresizesL[i].dataset.qnrFontresizeId = i;
+                // Create a new JS object for the font resize
+                QNR_INTER.fontresizeObjectsL.push(new FontresizeObject());
+                QNR_INTER.fontresizeObjectsL[i].object = QNR_INTER.fontresizesL[i];
+                // Initialize object
+                QNR_INTER.fontresizeObjectsL[i].initialize();
+            }
+        }
     }, false);
     
     
@@ -1814,7 +1923,8 @@ var QNR_INTER = {};
         //}
         // Dismiss navmenu on any click
         //else if (QNR_INTER.navmenuObject && document.querySelector("div.qnr-navmenu-icon-close")) {
-        if (QNR_INTER.navmenuObject && document.querySelector("div.qnr-navmenu-icon-close")) {
+        if (QNR_INTER.navmenuObject && document.querySelector("div.qnr-navmenu-icon-close") &&
+                        !clicked.classList.contains("qnr-hmenu")) { // Don't close on click on hmenu widget
             QNR_INTER.navmenuObject.hideVerticalMenu();
         }
         
@@ -1883,9 +1993,19 @@ var QNR_INTER = {};
     window.addEventListener("resize", function(event) {
         if (QNR_INTER.navmenuObject) QNR_INTER.navmenuObject.stylemenu();
         if (QNR_INTER.stickybarObject && QNR_INTER.stickybarObject.madesticky) QNR_INTER.stickybarObject.sizePlaceholder();
+        if (QNR_INTER.aspectkeepersL) {
+            for (var i = 0; i < QNR_INTER.aspectkeeperObjectsL.length; i++) {
+                QNR_INTER.aspectkeeperObjectsL[i].setHeight();
+            }
+        }
         if (QNR_INTER.fontresizesL) {
             for (var i = 0; i < QNR_INTER.fontresizeObjectsL.length; i++) {
                 QNR_INTER.fontresizeObjectsL[i].resize();
+            }
+        }
+        if (QNR_INTER.carouselsL) {
+            for (var i = 0; i < QNR_INTER.carouselObjectsL.length; i++) {
+                QNR_INTER.carouselObjectsL[i].styleCarousel();
             }
         }
     }, false);
