@@ -520,3 +520,4 @@ var QNR_HMENU = {};
     // Removed, using global functions in Quicknr Interface
 
 })() // End of Quicknr Hmenu
+

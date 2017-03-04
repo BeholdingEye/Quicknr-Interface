@@ -110,3 +110,4 @@ Version 1.1.0 - 17 November 2016
 Version 1.0.0 - 15 November 2016
 
   Initial release.
+
