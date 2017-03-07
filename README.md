@@ -61,7 +61,7 @@ Included widgets are:
 
 13. **Hierarchical Menu**
 
-  In addition, since version 1.2.0, a separate widget, hierarchical menu, has been added. The menu is separately deployable because most websites will not require it. However, the menu depends on the rest of the QI files, that must be linked to earlier in the HTML source code. The menu is presently not compatible with the collapsing navbar widget in the interface package.
+  In addition, since version 1.2.0, a separate widget, hierarchical menu, has been added. The menu is separately deployable because most websites will not require it. However, the menu depends on the rest of the QI files, that must be linked to earlier in the HTML source code.
 
 14. **Aspect Keeper**
 
