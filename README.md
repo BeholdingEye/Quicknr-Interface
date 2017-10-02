@@ -1,3 +1,5 @@
+This repository is no longer updated on GitHub. Quicknr Interface is now bundled with the QNRWP-A WordPress theme and updated there.
+
 # Quicknr-Interface
 
 Javascript and CSS interface widgets for web pages and web apps
